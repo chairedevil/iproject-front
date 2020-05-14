@@ -4,7 +4,7 @@
       color="#fff"
       absolute
     >
-      <h1 class="d-flex align-center"><img class="boxIcon mr-2" src="assets/box-icon.svg">取ってきます〜</h1>
+      <router-link to="/" class="titleLink"><h1 class="d-flex align-center"><img class="boxIcon mr-2" src="assets/box-icon.svg">取ってきます〜</h1></router-link>
       <v-spacer></v-spacer>
       <LoginBtn />
     </v-app-bar>
@@ -67,5 +67,10 @@
     top: 40px;
     text-align: center;
     z-index: 1000 !important;
+  }
+  .titleLink {
+    color: #000;
+    text-decoration: none;
+    font-size: 15px;
   }
 </style>

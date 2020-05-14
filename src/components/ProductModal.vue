@@ -25,7 +25,7 @@
                 <p>
                   <v-chip class="mr-2 mb-2" color="#cc1f40" text-color="white" label v-for="tag in tagsArr" :key="tag" @click="$emit('onTagClick', tag)"><v-icon left>mdi-label</v-icon>{{ tag }}</v-chip>
                 </p>
-                <v-btn color="#cc1f40" outlined @click="showModal = false" class="reserveBtn mt-auto" x-large>予約</v-btn>
+                <v-btn v-if="status.isLoggedIn === true && user.userInfo.id !== modalProduct.seller_id" color="#cc1f40" outlined @click="() => {confirmDialog = true}" class="reserveBtn mt-auto" x-large>予約</v-btn>
               </v-col>
             </v-row>
             <v-row>
@@ -37,13 +37,32 @@
         </v-card-text>
       </v-card>
     </v-dialog>
+    <v-dialog v-model="confirmDialog" persistent max-width="290">
+      <template v-slot:activator="{ on }">
+        <v-btn color="primary" dark v-on="on">Open Dialog</v-btn>
+      </template>
+      <v-card>
+        <v-card-title class="headline">予約確認</v-card-title>
+        <v-card-text>「{{ modalProduct.username }}」さんの「{{ modalProduct.name }}」を予約しますか。</v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="red darken-1" text @click="confirmDialog = false">キャンセル</v-btn>
+          <v-btn color="green darken-1" text @click="handleReserve">確認</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>
 
 <script>
+import config from '../config'
+import Axios from 'axios'
+import { mapState } from 'vuex'
+
 export default {
   data: () => {
     return {
+      confirmDialog: false
     }
   },
   props: ['modalProduct', 'showModal'],
@@ -53,15 +72,34 @@ export default {
     // }
   },
   computed: {
+    ...mapState('auth', ['status', 'user']),
     imgSrc: function () {
-      return 'http://localhost:8000/images/' + this.modalProduct.img_path
+      return `${config.API_SERVER}../images/` + this.modalProduct.img_path
     },
     avaSrc: function () {
-      return 'http://localhost:8000/images/avatar/' + this.modalProduct.ava_path
+      return `${config.API_SERVER}../images/avatar/` + this.modalProduct.ava_path
     },
     tagsArr: function () {
-      console.log()
       return this.modalProduct.tags.split(", ")
+    }
+  },
+  methods: {
+    handleReserve: function () {
+      this.confirmDialog = false
+      console.log('「予約」ボタンが押された。')
+      
+      Axios.patch(config.API_SERVER + 'reserve', {
+        'product_id': this.modalProduct.id
+      }, 
+      { headers: { Authorization: `Bearer ${ this.user.token}` } })
+      .then(response => {
+        console.log(response)
+        if(response.data.success === true){
+          this.$store.dispatch('auth/setAlert', '予約しました。')
+        }else{
+          this.$store.dispatch('auth/setAlert', response.data.message)
+        }
+      })
     }
   }
 }

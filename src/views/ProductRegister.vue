@@ -124,6 +124,7 @@ export default {
         form.append('lat', this.mapCenter.lat())
         form.append('lng', this.mapCenter.lng())
         form.append('img_path', this.img_path)
+        
         Axios.post(config.API_SERVER + 'products', form, 
         { headers: { Authorization: `Bearer ${ this.user.token}` } })
         .then(response => {

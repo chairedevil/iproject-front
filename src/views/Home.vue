@@ -56,7 +56,7 @@
         <GmapMarker :position="mapCenter" />
         <gmap-marker :key="index" v-for="(m, index) in itemsOnMap" :position="{lat: m.lat, lng: m.lng }" :clickable="true" :draggable="true" @click="handleProductSelect(m)"></gmap-marker>
       </GmapMap>
-      <ProductModal :modalProduct="modalProduct" :showModal="showModal" @handleChangeShowModal="showModal = false" @onTagClick="onTagClick"></ProductModal>
+      <ProductModal :modalProduct="modalProduct" :showModal="showModal" @handleChangeShowModal="()=>{showModal = false; getProducts()}" @onTagClick="onTagClick"></ProductModal>
     </div>
     <div class="cardContent" v-if="showCardContent">
       <div v-masonry transition-duration="0.3s" item-selector=".item">
@@ -120,17 +120,17 @@ export default {
     ProductModal
   },
   created () {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        console.log("Got current location")
-        console.log(position)
-        this.mapCenter = {lat:position.coords.latitude, lng:position.coords.longitude};
-      }, (err) => {
-        console.log(err)
-      },{enableHighAccuracy: true})
-    } else {
-      console.log("Set geo with default value(shinjuku station)")
-    }
+    // if (navigator.geolocation) {
+    //   navigator.geolocation.getCurrentPosition((position) => {
+    //     console.log("Got current location")
+    //     console.log(position)
+    //     this.mapCenter = {lat:position.coords.latitude, lng:position.coords.longitude};
+    //   }, (err) => {
+    //     console.log(err)
+    //   },{enableHighAccuracy: true})
+    // } else {
+    //   console.log("Set geo with default value(shinjuku station)")
+    // }
   },
   methods: {
     onTagClick: function (tag) {
