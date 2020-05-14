@@ -2,7 +2,7 @@
   <div>
     <v-menu
       v-model="loginDialog"
-      v-if="!isLoggedIn"
+      v-if="!status.isLoggedIn"
       offset-y
       :close-on-content-click="false"
       nudge-bottom="8"
@@ -41,7 +41,7 @@
     </v-menu>
 
     <v-menu
-      v-if="isLoggedIn"
+      v-if="status.isLoggedIn"
       offset-y
       :close-on-content-click="false"
       nudge-bottom="8"
@@ -59,27 +59,28 @@
       </template>
       <v-list>
         <v-list-item
-          v-on:click="handleProductRegis"
+          @click="handleProductRegis"
         >
           商品登録
         </v-list-item>
         <v-list-item
-          v-on:click="handleMyList"
+          @click="handleMyList"
         >
           マイリスト
         </v-list-item>
         <v-list-item
-          v-on:click="handleInbox"
+          @click="handleInbox"
         >
           メッセージ
         </v-list-item>
         <v-list-item
-          v-on:click="handleLogout"
+          @click="handleLogout"
         >
           ログアウト
         </v-list-item>
       </v-list>
     </v-menu>
+
   </div>
 </template>
 
@@ -91,37 +92,39 @@ export default {
     return {
       loginDialog: false,
       email: "user01@mail.com",
-      pwd: "123456"
+      pwd: "123456",
     }
   },
   computed: {
+    ...mapState('auth', ['user', 'status']),
     avatarUrl: function () {
       return './assets/images/avatar/' + this.user.userInfo.ava_path
     },
-    ...mapState(['user', 'isLoggedIn'])
   },
   methods: {
     handleLogin () {
       this.loginDialog = false
-      this.$store.dispatch('login', {email: this.email, pwd: this.pwd})
+      this.$store.dispatch('auth/login', {email: this.email, pwd: this.pwd})
     },
     handleLogout () {
       console.log('Menu->Logout')
-      this.$store.dispatch('logout')
+      this.$store.dispatch('auth/logout')
     },
     handleMyList () {
       console.log('handleMyList')
+      this.$router.push('/mylist')
     },
     handleInbox () {
       console.log('handleInbox')
     },
     handleProductRegis () {
       console.log('handleProductRegis')
+      this.$router.push('/product_regis')
     }
   },
   created () {
     if(this.user.token !== ''){
-      this.$store.dispatch('getUserInfo')
+      this.$store.dispatch('auth/getUserInfo')
     }
   }
 }
@@ -133,9 +136,9 @@ export default {
     font-weight: 900;
   }
   .innerLoginBtn {
-      color: red !important;
-      font-size: 18px !important;
-      font-weight: 600;
+    color: $accent-red !important;
+    font-size: 18px !important;
+    font-weight: 600;
   }
   .v-menu__content {
     box-shadow: none;

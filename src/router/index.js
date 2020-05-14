@@ -11,12 +11,14 @@ Vue.use(VueRouter)
     component: Home
   },
   {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
+    path: '/mylist',
+    name: 'MyList',
+    component: () => import('../views/MyList.vue')
+  },
+  {
+    path: '/product_regis',
+    name: 'ProductRegister',
+    component: () => import('../views/ProductRegister.vue')
   },
 ]
 
@@ -24,6 +26,19 @@ const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  // redirect to login page if not logged in and trying to access a restricted page
+  const publicPages = ['/'];
+  const authRequired = !publicPages.includes(to.path);
+  const loggedIn = localStorage.getItem('token');
+
+  if (authRequired && !loggedIn) {
+    return next('/');
+  }
+
+  next();
 })
 
 export default router
