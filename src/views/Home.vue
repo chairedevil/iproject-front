@@ -1,6 +1,6 @@
 <template>
   <div class="mainContent">
-    <v-btn class="toggleCardView" color="#cc1f40" dark @click="showCardContent = !showCardContent">カートリスト</v-btn>
+    <v-btn class="toggleCardView" color="#cc1f40" dark @click="showCardContent = !showCardContent">カードスタイル</v-btn>
     <div class="mapContent">
       <div class="searchbar d-flex">
         <v-row>

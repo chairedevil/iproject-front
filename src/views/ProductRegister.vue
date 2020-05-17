@@ -51,6 +51,7 @@
               v-model="desc"
               required
             ></v-textarea>
+            <VueEditor v-model="content"></VueEditor>
             打ち合わせ希望の場所
             <div class="map">
               <GmapMap
@@ -79,6 +80,7 @@ import Axios from 'axios'
 import config from '../config'
 import { mapState } from 'vuex'
 import _ from 'lodash'
+import { VueEditor } from "vue2-editor"
 
 export default {
   name: 'ProductRegistr',
@@ -100,7 +102,7 @@ export default {
     }
   },
   components: {
-
+    VueEditor
   },
   computed: {
     ...mapState('auth', ['user'])
