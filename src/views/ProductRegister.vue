@@ -45,13 +45,20 @@
               prepend-icon="mdi-camera"
               required
             ></v-file-input>
-            <v-textarea
+            <!--<v-textarea
               label="商品詳細"
               :rules="[v => !!v || '画像を入力してください']"
               v-model="desc"
               required
-            ></v-textarea>
-            <VueEditor v-model="content"></VueEditor>
+            ></v-textarea>-->
+            <br>
+            商品詳細
+            <VueEditor
+              v-model="desc"
+              useCustomImageHandler
+              @image-added="handleImageAdded"
+            ></VueEditor>
+            <br>
             打ち合わせ希望の場所
             <div class="map">
               <GmapMap
@@ -92,7 +99,7 @@ export default {
       price: 10000,
       categoryId: 6,
       tags: ['gundam', 'ガンプラー', 'ガンダム'],
-      desc: 'テスト',
+      desc: '',
       img_path: null,
 
       mapCenter: {
@@ -139,6 +146,28 @@ export default {
           this.$store.dispatch('auth/setAlert', '商品登録失敗')
         })
       }
+    },
+    handleImageAdded(file, Editor, cursorLocation, resetUploader){//file, Editor, cursorLocation, resetUploader
+      console.log("add image", file)
+
+      var formData = new FormData();
+      formData.append("image", file);
+
+      Axios({
+        url: `${config.API_SERVER}add_img`,
+        method: "POST",
+        data: formData,
+        headers: { Authorization: `Bearer ${ this.user.token}` }
+      })
+      .then(result => {
+        console.log(result)
+        let url = `${config.API_SERVER}../images/${result.data.data}`; // Get url from response
+        Editor.insertEmbed(cursorLocation, "image", url);
+        resetUploader();
+      })
+      .catch(err => {
+        console.log(err);
+      });
     }
   },
   created () {

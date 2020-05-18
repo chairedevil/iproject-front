@@ -116,6 +116,7 @@ export default {
     },
     handleInbox () {
       console.log('handleInbox')
+      this.$router.push('/msg')
     },
     handleProductRegis () {
       console.log('handleProductRegis')

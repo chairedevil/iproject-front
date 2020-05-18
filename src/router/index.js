@@ -16,6 +16,11 @@ Vue.use(VueRouter)
     component: () => import('../views/MyList.vue')
   },
   {
+    path: '/msg',
+    name: 'Messenger',
+    component: () => import('../views/Msg.vue')
+  },
+  {
     path: '/product_regis',
     name: 'ProductRegister',
     component: () => import('../views/ProductRegister.vue')
