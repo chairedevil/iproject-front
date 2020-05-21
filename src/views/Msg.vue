@@ -18,14 +18,23 @@
           <v-col cols="9" class="pa-0 chatSpace d-flex-column">
 
             <div class="msgHistory">
-              <div class="msgHistoryInner d-flex flex-column">
+              <div class="msgHistoryInner d-flex flex-column" ref="messageDisplay">
                 <div class="msg mt-auto"></div>
                 <div
                   v-for="msg in msgs"
                   :key="msg.id"
                   :class="['msg','ma-2','pa-2', msg.sender_id === user.userInfo.id ? 'ml-auto' : 'mr-auto']"
                 >
-                  {{ msg.msg }}
+                  <div v-if="msg.msg.substring(1,9) === 'reserved'">
+                    <v-img
+
+                      :src="getImgPath(msg.msg.substring(1,msg.msg.length - 1).split(',')[2])"
+                    ></v-img>
+                    「{{ msg.msg.substring(1,msg.msg.length - 1).split(",")[1] }}」を予約しました。
+                  </div>
+                  <div v-else> 
+                    {{ msg.msg }}
+                  </div>
                 </div>
 
               </div>
@@ -61,6 +70,8 @@
 import Axios from 'axios'
 import { mapState } from 'vuex'
 import config from '../config'
+import Pusher from 'pusher-js'
+import Echo from 'laravel-echo'
 
 export default {
   data: () => {
@@ -70,7 +81,8 @@ export default {
       targetUser: null,
       msgs: [],
 
-      msgText: ""
+      msgText: "",
+      dataFromPusher: ""
     }
   },
   computed: {
@@ -79,6 +91,9 @@ export default {
   methods: {
     getAvaPath: function (path) {
       return `${config.API_SERVER}../images/avatar/${path}`
+    },
+    getImgPath: function (path) {
+      return `${config.API_SERVER}../images/${path}`
     },
     getMsgUserList: function () {
       Axios.get(`${config.API_SERVER}msguserlist`,
@@ -93,8 +108,39 @@ export default {
       Axios.get(`${config.API_SERVER}msg?targetuser=${id}`,
       { headers: { Authorization: `Bearer ${this.user.token}` } })
       .then(response => {
-        console.log(response)
+        //console.log(response)
         this.msgs = response.data.data
+
+        Pusher.logToConsole = false;
+        //https://github.com/pusher/pusher-js#configuration
+        var pusher = new Pusher('3b2be28a7d67c4e8f668', {
+          cluster: 'ap3',
+          forceTLS: true,
+          authEndpoint: config.API_SERVER + '../broadcasting/auth',
+          auth:{
+            headers: {
+              Authorization: 'Bearer ' + this.user.token,
+              Accept: 'application/json',
+              'X-CSRF-Token': "12Zbht11nrItof7Ei9lWDmrcmGy3bysl6v0N0E2P",
+            },
+          },
+        });
+
+        var echoInstance = new Echo({
+            broadcaster: 'pusher',
+            client: pusher,
+        });
+
+        let PairId = [id, this.user.userInfo.id].sort((a,b)=>{return a-b}).join(".")
+
+        echoInstance.private(`privateChat.${PairId}`)
+        .listen('PrivateChatEvent', (e) => {
+          console.log(e)
+          if(e[0] === 'PRIVATE'){
+            this.handleSelectUser(id)
+          }
+        });
+
       })
     },
     sendMsg: function () {
@@ -109,15 +155,21 @@ export default {
         .then(response => {
           console.log(response)
           this.msgText = ""
-          this.handleSelectUser(this.targetUser)
+          //this.handleSelectUser(this.targetUser)
         })
       }else{
         alert("相手または、メッセージを入力してくだいさい")
       }
+    },
+    scrollToEnd: function () {
+      this.$refs.messageDisplay.scrollTop = this.$refs.messageDisplay.lastElementChild.offsetTop;
     }
   },
   created() {
     this.getMsgUserList()
+  },
+  updated() {
+    this.$nextTick(() => this.scrollToEnd());
   }
 }
 </script>
@@ -157,6 +209,7 @@ export default {
         background-color: #fff;
         display: inline-block;
         border-radius: 5px;
+        max-width: 350px;
       }
     }
     .sendBoxContainer {
