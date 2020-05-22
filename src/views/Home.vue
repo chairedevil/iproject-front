@@ -143,6 +143,7 @@ export default {
     },
     centerChanged: _.debounce(function(geo) {
       this.mapCenter = geo
+      this.placeModel = null
     }, 500),
     getProducts: _.debounce(function(){
       let latQuery = typeof this.mapCenter.lat === "function" ? this.mapCenter.lat() : this.mapCenter.lat
