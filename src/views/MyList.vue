@@ -1,5 +1,11 @@
 <template>
   <v-container fluid class="mylistContainer">
+    <v-progress-circular
+      class="loadingCircle"
+      indeterminate
+      color="red"
+      v-if="isProcessLoading"
+    ></v-progress-circular>
     <v-row justify="center">
       <v-col cols="8">
         <h2>マイリスト</h2>
@@ -9,6 +15,12 @@
           class="pa-5"
         >
           <h3>販売リスト</h3>
+          <v-progress-circular
+            class="loadingCircle"
+            indeterminate
+            color="red"
+            v-if="isListLoading"
+          ></v-progress-circular>
           <div v-if="sellList !== []">
             <v-sheet elevation="3" v-for="list in sellList" :key="list.id" class="d-flex ma-5">
               <v-sheet>
@@ -36,6 +48,12 @@
             </v-sheet>
           </div>
           <h3>買い物リスト</h3>
+          <v-progress-circular
+            class="loadingCircle"
+            indeterminate
+            color="red"
+            v-if="isListLoading"
+          ></v-progress-circular>
           <div v-if="buyList !== []">
             <v-sheet elevation="3" v-for="list in buyList" :key="list.id" class="d-flex ma-5">
               <v-sheet>
@@ -93,7 +111,9 @@ export default {
       sellList:[],
       buyList:[],
       
-      rating: 3
+      rating: 3,
+      isListLoading: true,
+      isProcessLoading: false
     }
   },
   computed: {
@@ -114,16 +134,19 @@ export default {
       return status
     },
     getList: function () {
+      this.isListLoading = true
       Axios.get(`${config.API_SERVER}mylist`,
       { headers: { Authorization: `Bearer ${ this.user.token}` } })
       .then(response => {
         //console.log(response.data.data)
         this.sellList = response.data.data[0]
         this.buyList = response.data.data[1]
+        this.isListLoading = false
       })
     },
     handleDeleteProduct: function ($listId) {
       console.log("Delete Product")
+      this.isProcessLoading = true
       
       Axios.patch(config.API_SERVER + 'delete_product', {
         'list_id': $listId
@@ -131,6 +154,7 @@ export default {
       { headers: { Authorization: `Bearer ${ this.user.token}` } })
       .then(response => {
         console.log(response)
+        this.isProcessLoading = false
         if(response.data.success === true){
           this.$store.dispatch('auth/setAlert', '商品を削除しました。')
         }else{
@@ -142,6 +166,7 @@ export default {
     },
     handleCancelReserve: function ($listId) {
       console.log("Cancel Reserve")
+      this.isProcessLoading = true
       
       Axios.patch(config.API_SERVER + 'cancel_reserve', {
         'list_id': $listId
@@ -149,6 +174,7 @@ export default {
       { headers: { Authorization: `Bearer ${ this.user.token}` } })
       .then(response => {
         console.log(response)
+        this.isProcessLoading = false
         if(response.data.success === true){
           this.$store.dispatch('auth/setAlert', '予約をキャンセルしました。')
         }else{
@@ -160,6 +186,7 @@ export default {
     },
     handleDoneTransaction: function ($listId) {
       console.log("done_transaction")
+      this.isProcessLoading = true
       
       Axios.patch(config.API_SERVER + 'done_transaction', {
         'list_id': $listId
@@ -167,6 +194,7 @@ export default {
       { headers: { Authorization: `Bearer ${ this.user.token}` } })
       .then(response => {
         console.log(response)
+        this.isProcessLoading = false
         if(response.data.success === true){
           this.$store.dispatch('auth/setAlert', '取引完了しました。')
         }else{
@@ -178,6 +206,7 @@ export default {
     },
     handleRate: function (list_id) {
       console.log("rating the user who sold")
+      this.isProcessLoading = true
       
       Axios.patch(config.API_SERVER + 'rate_user', {
         'list_id': list_id,
@@ -186,6 +215,7 @@ export default {
       { headers: { Authorization: `Bearer ${ this.user.token}` } })
       .then(response => {
         //console.log(response)
+        this.isProcessLoading = false
         if(response.data.success === true){
           this.$store.dispatch('auth/setAlert', '評価しました')
         }else{
@@ -212,5 +242,10 @@ export default {
   }
   .statusText {
     color: #cc1f40;
+  }
+  .loadingCircle {
+    position: absolute;
+    left: calc(50% - 20px);
+    top: 50%;
   }
 </style>

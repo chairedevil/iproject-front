@@ -9,10 +9,20 @@
     >
       <template v-slot:activator="{ on }">
         <v-btn class="loginBtn" color="#000" text large v-on="on">
-          ログイン
-          <v-avatar size="30" class="ml-2">
-            <v-icon large color="#000" dark>mdi-account-circle</v-icon>
-          </v-avatar>
+          <v-progress-circular
+            class="loadingCircle"
+            indeterminate
+            color="red"
+            size="25"
+            width="3"
+            v-if="isLoginLoding"
+          ></v-progress-circular>
+          <div v-else>
+            ログイン
+            <v-avatar size="30" class="ml-2">
+              <v-icon large color="#000" dark>mdi-account-circle</v-icon>
+            </v-avatar>
+          </div>
         </v-btn>
       </template>
       <v-sheet width="300">
@@ -86,6 +96,7 @@
 
 <script>
 import { mapState } from 'vuex'
+import config from '../../config'
 
 export default {
   data: () => {
@@ -93,16 +104,28 @@ export default {
       loginDialog: false,
       email: "user01@mail.com",
       pwd: "123456",
+      isLoginLoding: false
     }
   },
   computed: {
     ...mapState('auth', ['user', 'status']),
     avatarUrl: function () {
-      return './assets/images/avatar/' + this.user.userInfo.ava_path
+      return config.API_SERVER + '../images/avatar/' + this.user.userInfo.ava_path
     },
+  },
+  watch: {
+    status: {
+      handler (val){
+        if(val.isLoggedIn === true){
+          this.isLoginLoding = false
+        }
+      },
+      deep: true
+    }
   },
   methods: {
     handleLogin () {
+      this.isLoginLoding = true
       this.loginDialog = false
       this.$store.dispatch('auth/login', {email: this.email, pwd: this.pwd})
     },
@@ -125,6 +148,7 @@ export default {
   },
   created () {
     if(this.user.token !== ''){
+      this.isLoginLoding = true
       this.$store.dispatch('auth/getUserInfo')
     }
   }

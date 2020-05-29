@@ -1,6 +1,7 @@
 <template>
   <div class="mainContent">
     <v-btn class="toggleCardView" color="#cc1f40" dark @click="showCardContent = !showCardContent">カードスタイル</v-btn>
+    <v-btn class="currentLocationBtn" color="#cc1f40" dark @click="goCurrentLocation">現在地</v-btn>
     <div class="mapContent">
       <div class="searchbar d-flex">
         <v-row>
@@ -59,11 +60,18 @@
       <ProductModal :modalProduct="modalProduct" :showModal="showModal" @handleChangeShowModal="()=>{showModal = false; getProducts()}" @onTagClick="onTagClick"></ProductModal>
     </div>
     <div class="cardContent" v-if="showCardContent">
-      <div v-masonry transition-duration="0.3s" item-selector=".item">
+      <v-progress-circular
+        class="loadingCircle"
+        indeterminate
+        color="red"
+        v-if="isProductLoading"
+      ></v-progress-circular>
+      <div v-masonry id="cardContainer" transition-duration="0.3s" stagger="0.1s" item-selector=".item" class="">
         <v-card
           v-masonry-tile
           class="item mb-5 ml-5"
-          max-width="200"
+          max-width="29%"
+          transition-duration="0.3s"
           v-for="item in itemsOnMap"
           :key="item.id"
           hover
@@ -71,6 +79,7 @@
         >
           <v-img
             :src="'http://localhost:8000/images/' + item.img_path"
+            @load="handleLoaded"
           ></v-img>
           <v-card-title>{{ item.name }}</v-card-title>
           <v-card-text>
@@ -100,7 +109,7 @@ export default {
 
       tags: undefined,
       categoryId: null,
-      categoriesList: [{text: '家具', value: 1}, {text: '家電', value: 2}, {text: '自転車', value: 3}, {text: '服・ファッション', value: 4}, {text: '携帯電話・スマホ', value: 5}, {text: 'おもちゃ', value: 6}, {text: 'パソコン', value: 7}, {text: 'チケット', value: 8}, {text: 'その他', value: 9}],
+      categoriesList: [{text: '指定なし', value: ''}, {text: '家具', value: 1}, {text: '家電', value: 2}, {text: '自転車', value: 3}, {text: '服・ファッション', value: 4}, {text: '携帯電話・スマホ', value: 5}, {text: 'おもちゃ', value: 6}, {text: 'パソコン', value: 7}, {text: 'チケット', value: 8}, {text: 'その他', value: 9}],
       
       mapCenter: {
         lat: 35.690112,
@@ -113,26 +122,28 @@ export default {
         tags: ' '
       },
       showModal: false,
-      showCardContent: true
+      showCardContent: true,
+
+      loadedImg: 0,
+      isProductLoading: false
     }
   },
   components: {
     ProductModal
   },
   created () {
-    // if (navigator.geolocation) {
-    //   navigator.geolocation.getCurrentPosition((position) => {
-    //     console.log("Got current location")
-    //     console.log(position)
-    //     this.mapCenter = {lat:position.coords.latitude, lng:position.coords.longitude};
-    //   }, (err) => {
-    //     console.log(err)
-    //   },{enableHighAccuracy: true})
-    // } else {
-    //   console.log("Set geo with default value(shinjuku station)")
-    // }
+    //this.goCurrentLocation()
+    this.getProducts()
   },
   methods: {
+    handleLoaded: function () {
+      // this.loadedImg++
+      // if(this.loadedImg === this.itemsOnMap.length){
+      //   console.log("LOADED")
+      //   this.$redrawVueMasonry()
+      // }
+      this.$redrawVueMasonry()
+    },
     onTagClick: function (tag) {
       this.tags = tag
       this.showModal = false
@@ -146,6 +157,9 @@ export default {
       this.placeModel = null
     }, 500),
     getProducts: _.debounce(function(){
+      this.itemsOnMap = []
+      this.isProductLoading = true
+      this.loadedImg = 0
       let latQuery = typeof this.mapCenter.lat === "function" ? this.mapCenter.lat() : this.mapCenter.lat
       let lngQuery = typeof this.mapCenter.lng === "function" ? this.mapCenter.lng() : this.mapCenter.lng
       //let tagsQuery = this.tags === undefined ? '' : this.tags
@@ -160,9 +174,23 @@ export default {
       Axios.get(`${config.API_SERVER}products?geo=${latQuery},${lngQuery}&tags=${tagsQuery}&category=${categoryQuery}`)
       .then(res => {
         console.log('Get product', res.data.data)
+        this.isProductLoading = false
         this.itemsOnMap = res.data.data
       })
     }, 500),
+    goCurrentLocation: function () {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          console.log("Got current location")
+          console.log(position)
+          this.mapCenter = {lat:position.coords.latitude, lng:position.coords.longitude};
+        }, (err) => {
+          console.log(err)
+        },{enableHighAccuracy: true})
+      } else {
+        console.log("Set geo with default value(shinjuku station)")
+      }
+    }
   },
   watch: {
     placeValue: _.debounce(function(val) {
@@ -222,8 +250,9 @@ export default {
   .cardContent {
     padding-top: 100px;
     width: 100%;
-    height: 100%;
+    height: 91vh;
     overflow: auto;
+    position: relative;
   }
   .searchbar {
     z-index: 1 !important;
@@ -245,5 +274,16 @@ export default {
     right: 20px;
     bottom: 20px;
     z-index: 100 !important;
+  }
+  .currentLocationBtn {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    z-index: 100 !important;
+  }
+  .loadingCircle{
+    position: absolute;
+    top: 50%;
+    left: 50%;
   }
 </style>

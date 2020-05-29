@@ -4,8 +4,14 @@
       <v-col cols="8">
         <h2>メッセージ</h2>
         <v-row class="chatBox">
-          <v-col cols="3" class="pa-0">
-            <div v-for="user in msgUserList" :key="user.id" class="userList pa-3" @click="handleSelectUser(user.id)">
+          <v-col cols="3" class="pa-0 userListOuter">
+            <v-progress-circular
+              class="loadingCircle"
+              indeterminate
+              color="red"
+              v-if="isUserListLoading"
+            ></v-progress-circular>
+            <div v-for="user in msgUserList" :key="user.id" class="userList pa-3" @click="handleSelectUser(user.id, true)">
               <v-avatar>
                 <img
                   :src="getAvaPath(user.ava_path)"
@@ -18,18 +24,23 @@
           <v-col cols="9" class="pa-0 chatSpace d-flex-column">
 
             <div class="msgHistory">
+              <v-progress-circular
+                class="loadingCircle"
+                indeterminate
+                color="red"
+                v-if="isMsgLoading"
+              ></v-progress-circular>
               <div class="msgHistoryInner d-flex flex-column" ref="messageDisplay">
                 <div class="msg mt-auto"></div>
                 <div
                   v-for="msg in msgs"
                   :key="msg.id"
-                  :class="['msg','ma-2','pa-2', msg.sender_id === user.userInfo.id ? 'ml-auto' : 'mr-auto']"
+                  :class="['msg','ma-2','ml-5','pa-2', msg.sender_id === user.userInfo.id ? 'ml-auto' : 'mr-auto']"
                 >
                   <div v-if="msg.msg.substring(1,9) === 'reserved'">
                     <v-img
-
                       :src="getImgPath(msg.msg.substring(1,msg.msg.length - 1).split(',')[2])"
-                    ></v-img>
+                    ></v-img><p></p>
                     「{{ msg.msg.substring(1,msg.msg.length - 1).split(",")[1] }}」を予約しました。
                   </div>
                   <div v-else> 
@@ -82,7 +93,9 @@ export default {
       msgs: [],
 
       msgText: "",
-      dataFromPusher: ""
+      dataFromPusher: "",
+      isUserListLoading: false,
+      isMsgLoading: false
     }
   },
   computed: {
@@ -96,18 +109,25 @@ export default {
       return `${config.API_SERVER}../images/${path}`
     },
     getMsgUserList: function () {
+      this.isUserListLoading = true
       Axios.get(`${config.API_SERVER}msguserlist`,
       { headers: { Authorization: `Bearer ${this.user.token}` } })
       .then(response => {
+        this.isUserListLoading = false
         this.msgUserList = response.data.data
       })
     },
-    handleSelectUser: function (id) {
+    handleSelectUser: function (id, clear = false) {
+      if(clear){
+        this.msgs = []
+      }
+      this.isMsgLoading = true
       console.log(`select user:${id} from list`)
       this.targetUser = id
       Axios.get(`${config.API_SERVER}msg?targetuser=${id}`,
       { headers: { Authorization: `Bearer ${this.user.token}` } })
       .then(response => {
+        this.isMsgLoading = false
         //console.log(response)
         this.msgs = response.data.data
 
@@ -145,7 +165,7 @@ export default {
     },
     sendMsg: function () {
       console.log("send msg")
-
+      this.isMsgLoading = true
       if(this.targetUser !== null && this.msgText.trim() !== ""){
         Axios.post(`${config.API_SERVER}sendmsg`,{
           target_user: this.targetUser,
@@ -222,5 +242,16 @@ export default {
         border-radius: 5px;
       }
     }
+  }
+  .msgHistory {
+    position: relative;
+  }
+  .userListOuter {
+    position: relative;
+  }
+  .loadingCircle {
+    position: absolute;
+    top: 50%;
+    left: calc(50% - 20px);
   }
 </style>

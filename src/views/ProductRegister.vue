@@ -31,10 +31,16 @@
             <v-combobox
               label="商品に関するキーワード"
               v-model="tags"
-              :rules="[v => !!v || 'キーワードを入力してください']"
+              :rules="[
+                v => !!v || 'キーワードを入力してください',
+                v => this.tags.length > 0 || 'キーワードを入力してください'
+                ]"
               small-chips
               multiple
               required
+              clearable
+              @click:clear="tagsClear"
+              
             >
             </v-combobox>
             <v-file-input
@@ -98,7 +104,7 @@ export default {
       name: 'gundam',
       price: 10000,
       categoryId: 6,
-      tags: ['gundam', 'ガンプラー', 'ガンダム'],
+      tags: null,
       desc: '',
       img_path: null,
 
@@ -115,6 +121,9 @@ export default {
     ...mapState('auth', ['user'])
   },
   methods: {
+    tagsClear: function () {
+      this.tags = null
+    },
     centerChanged: _.debounce(function(geo) {
       this.mapCenter = geo
     }, 500),

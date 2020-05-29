@@ -56,7 +56,9 @@ const auth = {
       localStorage.removeItem('token')
       commit('setMsg', 'ログアウトしました。')
       commit('logout')
-      router.push('/')
+      
+      if (router.currentRoute.fullPath !== '/') router.push('/')
+      //router.push('/')
     },
     getUserInfo({commit, state}) {
       Axios.get(config.API_SERVER + 'user', 

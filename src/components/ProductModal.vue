@@ -19,18 +19,32 @@
                       :alt="modalProduct.username"
                     >
                   </v-avatar>
-                  {{ modalProduct.username }}
+                  {{ modalProduct.username }} <span v-if="modalProduct.user_rating !== null"> (<span class="starIcon">★</span>{{ modalProduct.user_rating }})</span>
                 </p>
                 <p class="price">価格 : {{ modalProduct.price }}円</p>
                 <p>
                   <v-chip class="mr-2 mb-2" color="#cc1f40" text-color="white" label v-for="tag in tagsArr" :key="tag" @click="$emit('onTagClick', tag)"><v-icon left>mdi-label</v-icon>{{ tag }}</v-chip>
                 </p>
-                <v-btn v-if="status.isLoggedIn === true && user.userInfo.id !== modalProduct.seller_id" color="#cc1f40" outlined @click="() => {confirmDialog = true}" class="reserveBtn mt-auto" x-large>予約</v-btn>
+                <v-btn
+                  v-if="status.isLoggedIn === true && user.userInfo.id !== modalProduct.seller_id"
+                  color="#cc1f40"
+                  outlined
+                  @click="() => {confirmDialog = true}"
+                  class="reserveBtn mt-auto"
+                  x-large
+                >
+                  <v-progress-circular
+                    class="loadingCircle"
+                    indeterminate
+                    color="red"
+                    v-if="isReserveLoading"
+                  ></v-progress-circular>
+                  <div v-else>予約</div>
+                </v-btn>
               </v-col>
             </v-row>
             <v-row>
-              <v-col>
-                {{ modalProduct.desc }}
+              <v-col v-html="modalProduct.desc" class="descContainer">
               </v-col>
             </v-row>
           </v-container>
@@ -38,9 +52,6 @@
       </v-card>
     </v-dialog>
     <v-dialog v-model="confirmDialog" persistent max-width="290">
-      <template v-slot:activator="{ on }">
-        <v-btn color="primary" dark v-on="on">Open Dialog</v-btn>
-      </template>
       <v-card>
         <v-card-title class="headline">予約確認</v-card-title>
         <v-card-text>「{{ modalProduct.username }}」さんの「{{ modalProduct.name }}」を予約しますか。</v-card-text>
@@ -62,7 +73,8 @@ import { mapState } from 'vuex'
 export default {
   data: () => {
     return {
-      confirmDialog: false
+      confirmDialog: false,
+      isReserveLoading: false
     }
   },
   props: ['modalProduct', 'showModal'],
@@ -85,6 +97,7 @@ export default {
   },
   methods: {
     handleReserve: function () {
+      this.isReserveLoading = true
       this.confirmDialog = false
       console.log('「予約」ボタンが押された。')
       
@@ -95,6 +108,8 @@ export default {
       .then(response => {
         console.log(response)
         if(response.data.success === true){
+          this.$emit('handleChangeShowModal')
+          this.isReserveLoading = false
           this.$store.dispatch('auth/setAlert', '予約しました。')
         }else{
           this.$store.dispatch('auth/setAlert', response.data.message)
@@ -118,5 +133,16 @@ export default {
     .price {
       font-size: 20px;
     }
+  }
+  .descContainer::v-deep {
+    img {
+      max-width: 100%;
+    }
+  }
+  .starIcon {
+    color: #ff9800;
+  }
+  .loadingCircle {
+
   }
 </style>
